@@ -10,8 +10,7 @@
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:context="jp.ac.u_tokyo.t.utdroid_googlemaps.MainActivity" />
+        android:layout_height="match_parent" />
 
     <TextView
         android:id="@+id/textViewStatus"
