@@ -3,11 +3,14 @@ package jp.ac.u_tokyo.t.utdroid_googlemaps;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -20,6 +23,10 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends FragmentActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     /* Viewを格納するための変数 */
@@ -105,6 +112,19 @@ public class MainActivity extends FragmentActivity implements GoogleApiClient.Co
         if (location != null) {
             /* 緯度経度をTextViewに表示 */
             textViewStatus.setText("緯度："+location.getLongitude()+"，経度："+location.getLatitude());
+
+            /* Geocoder APIで住所を逆引き */
+            try {
+                Geocoder geocoder = new Geocoder(this, Locale.JAPAN);
+                List<Address> list_address = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+                if(!list_address.isEmpty()) {
+                    Toast.makeText(this, list_address.get(0).getAddressLine(1), Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "住所を特定できませんでした。", Toast.LENGTH_SHORT).show();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
             /* GoogleMapの中心を移動 */
             CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 14);
