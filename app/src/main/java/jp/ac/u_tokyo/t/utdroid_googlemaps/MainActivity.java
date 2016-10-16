@@ -1,14 +1,18 @@
 package jp.ac.u_tokyo.t.utdroid_googlemaps;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.ContextCompat;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -36,6 +40,7 @@ public class MainActivity extends FragmentActivity implements GoogleApiClient.Co
     /* 位置情報取得のための変数 */
     private GoogleApiClient mGoogleApiClient;
     private FusedLocationProviderApi fusedLocationProviderApi = LocationServices.FusedLocationApi;
+    private static final int LOCATION_REQUEST_CODE = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,7 +71,6 @@ public class MainActivity extends FragmentActivity implements GoogleApiClient.Co
 
         /* GoogleMAPのセットアップ */
         MapsInitializer.initialize(this);
-        mapView.setMyLocationEnabled(true);
         mapView.getUiSettings().setCompassEnabled(true);
         mapView.getUiSettings().setIndoorLevelPickerEnabled(false);
         mapView.getUiSettings().setMapToolbarEnabled(false);
@@ -80,15 +84,22 @@ public class MainActivity extends FragmentActivity implements GoogleApiClient.Co
         /* デフォルトの位置を東京駅に設定 */
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(35.681382, 139.766084), 14);
         mapView.moveCamera(cameraUpdate);
-    }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        /* 位置情報の取得を開始する */
-        if (mGoogleApiClient != null) {
-            mGoogleApiClient.connect();
+        /* Android 6.0以上かどうかで条件分岐 */
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            /* Permissionを取得済みかどうか確認 */
+            String[] dangerousPermissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                    || ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                /* 未取得ならPermissionを要求 */
+                requestPermissions(dangerousPermissions, LOCATION_REQUEST_CODE);
+            }else{
+                /* 取得済みなら位置情報の取得を開始 */
+                connectGoogleApiClient();
+            }
+        }else{
+            /* Android 6.0未満なら位置情報の取得を開始 */
+            connectGoogleApiClient();
         }
     }
 
@@ -100,6 +111,30 @@ public class MainActivity extends FragmentActivity implements GoogleApiClient.Co
         }
 
         super.onPause();
+    }
+
+    /*
+     * Android 6.0以上のDANGEROUS_PERMISSION対策
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == LOCATION_REQUEST_CODE) {
+            // Permissionが許可された
+            if (grantResults.length == 0) {
+                return;
+            }else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                connectGoogleApiClient();
+            } else {
+                Toast.makeText(this, "現在地の取得を許可して下さい。", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void connectGoogleApiClient() {
+        /* 位置情報の取得を開始する */
+        if (mGoogleApiClient != null) {
+            mGoogleApiClient.connect();
+        }
     }
 
 
@@ -129,6 +164,7 @@ public class MainActivity extends FragmentActivity implements GoogleApiClient.Co
             /* GoogleMapの中心を移動 */
             CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 14);
             mapView.moveCamera(cameraUpdate);
+            mapView.setMyLocationEnabled(true);
         } else {
             textViewStatus.setText("現在地を取得できませんでした。");
         }
