@@ -146,7 +146,7 @@ public class MainActivity extends FragmentActivity implements GoogleApiClient.Co
         Location location = fusedLocationProviderApi.getLastLocation(mGoogleApiClient);
         if (location != null) {
             /* 緯度経度をTextViewに表示 */
-            textViewStatus.setText("緯度："+location.getLongitude()+"，経度："+location.getLatitude());
+            textViewStatus.setText("経度："+location.getLongitude()+"，緯度："+location.getLatitude());
 
             /* Geocoder APIで住所を逆引き */
             try {
